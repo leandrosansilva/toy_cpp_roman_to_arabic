@@ -58,6 +58,16 @@ relations conversion_relations {
   }
 };
 
+using components = array<int, 4>;
+
+constexpr components extract_components(int arabic)
+{
+  int m = arabic / 1000;
+  int c = arabic % 1000;
+  int d = c % 100;
+  return {m, c / 100, d / 10, d % 10};
+}
+
 using combination = array<relation::iterator, 4>;
 
 combination next(combination c)
@@ -140,8 +150,15 @@ int roman_to_arabic(const string &roman)
 
 string arabic_to_roman(int arabic)
 {
-  // FIXME: this has a terrible performance, but who cares?! :-)
-  return combination_roman(nth_combination(arabic));
+  auto comps = extract_components(arabic);
+
+  combination comb;
+
+  for (size_t i = 0, size = comps.size(); i < size; i++) {
+    comb[size - 1 - i] = conversion_relations[size - 1 - i].begin() + comps[i];
+  }
+
+  return combination_roman(comb);
 }
 
 go_bandit([]{
@@ -151,6 +168,24 @@ go_bandit([]{
         auto comb = nth_combination(i);
         AssertThat(combination_arabic(comb), Equals(i)); 
       }
+    });
+  });
+
+  describe("Obtains the 'components' of a arabic number", []{
+    it("obtains 0,0,0,0 from 0", [&] {
+      AssertThat(extract_components(0), EqualsContainer(components{0, 0, 0, 0}));
+    });
+
+    it("obtains 0,0,0,4 from 4", [&] {
+      AssertThat(extract_components(4), EqualsContainer(components{0, 0, 0, 4}));
+    });
+
+    it("obtains 0,0,3,5 from 35", [&] {
+      AssertThat(extract_components(35), EqualsContainer(components{0, 0, 3, 5}));
+    });
+
+    it("obtains 2,5,7,3 from 2573", [&] {
+      AssertThat(extract_components(2573), EqualsContainer(components{2, 5, 7, 3}));
     });
   });
 
@@ -165,6 +200,10 @@ go_bandit([]{
 
     it("converts 0 to empty string", [&] {
       AssertThat(arabic_to_roman(0), Equals(""));
+    });
+
+    it("converts 245 to empty CCXLV", [&] {
+      AssertThat(arabic_to_roman(245), Equals("CCXLV"));
     });
 
     it("validate all numbers, by converting back and forth", [&] {
