@@ -72,29 +72,33 @@ using combination = array<relation::iterator, 4>;
 
 combination next(combination c)
 {
-  // FIXME: those nested ifs were intentional
-  // The idea is refactor them and see the before/after afterwards :-)
-  if (next(c[0]) == end(conversion_relations[0])) {
-    c[0] = begin(conversion_relations[0]);
-    if (next(c[1]) == end(conversion_relations[1])) {
-      c[1] = begin(conversion_relations[1]);
-      if (next(c[2]) == end(conversion_relations[2])) {
-        c[2] = begin(conversion_relations[2]);
-        if (next(c[3]) == end(conversion_relations[3])) {
-          c[3] = begin(conversion_relations[3]);
-        } else {
-          c[3] = next(c[3]);
-        }
-      } else {
-        c[2] = next(c[2]);
-      }
-    } else {
-      c[1] = next(c[1]);
-    }
-  } else {
+  // NOTE: but this is still crappy :-(
+  if (next(c[0]) != end(conversion_relations[0])) {
     c[0] = next(c[0]);
+    return c;
   }
 
+  c[0] = begin(conversion_relations[0]);
+
+  if (next(c[1]) != end(conversion_relations[1])) {
+    c[1] = next(c[1]);
+    return c;
+  }
+
+  c[1] = begin(conversion_relations[1]);
+
+  if (next(c[2]) != end(conversion_relations[2])) {
+    c[2] = next(c[2]);
+    return c;
+  }
+
+  c[2] = begin(conversion_relations[2]);
+
+  if (next(c[3]) != end(conversion_relations[3])) {
+    c[3] = next(c[3]);
+    return c;
+  }
+  
   return c;
 }
 
