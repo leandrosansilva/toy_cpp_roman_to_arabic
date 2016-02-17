@@ -9,7 +9,9 @@
 using namespace bandit;
 using namespace std;
 
-using relation = vector<pair<string, int>>;
+using arabic = unsigned int;
+
+using relation = vector<pair<string, unsigned int>>;
 
 using relations = array<relation, 4>;
 
@@ -119,7 +121,7 @@ combination nth_combination(unsigned int nth)
   return c;
 }
 
-int combination_arabic(const combination &c)
+unsigned int combination_arabic(const combination &c)
 {
   return std::accumulate(begin(c), end(c), 0, [](unsigned int cur, const auto &pair) {
     return cur + pair->second;
@@ -133,7 +135,7 @@ string combination_roman(const combination &c)
   });
 }
 
-int roman_to_arabic(const string &roman)
+unsigned int roman_to_arabic(const string &roman)
 {
   for (auto c = combination_begin; c != combination_end; c = next(c)) {
     if (combination_roman(c) == roman) {
@@ -178,27 +180,27 @@ go_bandit([]{
 
   describe("Slooooow roman to arabic and vice-versa implementation", []{
     it("converts an empty string to 0", [&] {
-      AssertThat(roman_to_arabic(""), Equals(0));
+      AssertThat(roman_to_arabic(""), Equals(0u));
     });
 
     it("converts I empty string to 1", [&] {
-      AssertThat(roman_to_arabic("I"), Equals(1));
+      AssertThat(roman_to_arabic("I"), Equals(1u));
     });
 
     it("converts XII empty string to 12", [&] {
-      AssertThat(roman_to_arabic("XII"), Equals(12));
+      AssertThat(roman_to_arabic("XII"), Equals(12u));
     });
 
     it("converts 0 to empty string", [&] {
-      AssertThat(arabic_to_roman(0), Equals(""));
+      AssertThat(arabic_to_roman(0u), Equals(""));
     });
 
     it("converts 245 to empty CCXLV", [&] {
-      AssertThat(arabic_to_roman(245), Equals("CCXLV"));
+      AssertThat(arabic_to_roman(245u), Equals("CCXLV"));
     });
 
     it("validate all numbers, by converting back and forth", [&] {
-      for (int i = 0; i <= 3999; i++) {
+      for (auto i = 0u; i <= 3999; i++) {
         AssertThat(roman_to_arabic(arabic_to_roman(i)), Equals(i));
       }
     });
