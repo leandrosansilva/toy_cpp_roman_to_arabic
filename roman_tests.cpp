@@ -65,7 +65,7 @@ constexpr components extract_components(unsigned int arabic)
   auto m = arabic / 1000u;
   auto c = arabic % 1000u;
   auto d = c % 100u;
-  return {m, c / 100u, d / 10u, d % 10};
+  return {m, c / 100u, d / 10u, d % 10u};
 }
 
 using combination = array<relation::iterator, 4>;
