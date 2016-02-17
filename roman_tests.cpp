@@ -58,49 +58,17 @@ relations conversion_relations {
   }
 };
 
-using components = array<int, 4>;
+using components = array<unsigned int, 4>;
 
-constexpr components extract_components(int arabic)
+constexpr components extract_components(unsigned int arabic)
 {
-  int m = arabic / 1000;
-  int c = arabic % 1000;
-  int d = c % 100;
-  return {m, c / 100, d / 10, d % 10};
+  auto m = arabic / 1000u;
+  auto c = arabic % 1000u;
+  auto d = c % 100u;
+  return {m, c / 100u, d / 10u, d % 10};
 }
 
 using combination = array<relation::iterator, 4>;
-
-combination next(combination c)
-{
-  // NOTE: but this is still crappy :-(
-  if (next(c[0]) != end(conversion_relations[0])) {
-    c[0] = next(c[0]);
-    return c;
-  }
-
-  c[0] = begin(conversion_relations[0]);
-
-  if (next(c[1]) != end(conversion_relations[1])) {
-    c[1] = next(c[1]);
-    return c;
-  }
-
-  c[1] = begin(conversion_relations[1]);
-
-  if (next(c[2]) != end(conversion_relations[2])) {
-    c[2] = next(c[2]);
-    return c;
-  }
-
-  c[2] = begin(conversion_relations[2]);
-
-  if (next(c[3]) != end(conversion_relations[3])) {
-    c[3] = next(c[3]);
-    return c;
-  }
-  
-  return c;
-}
 
 const combination combination_begin {
   begin(conversion_relations[0]),
@@ -116,7 +84,31 @@ const combination combination_end {
   end(conversion_relations[3])
 };
 
-combination nth_combination(int nth)
+combination next(const combination &c)
+{
+  return get<2>(accumulate(begin(c), end(c), make_tuple(true, 0u, c), [](auto acc, auto cur) {
+    auto has_overflow = get<0>(acc);
+    auto index = get<1>(acc);
+    auto c = get<2>(acc);
+    auto next_index = index + 1;
+
+    if (!has_overflow) {
+      return make_tuple(false, next_index, c);
+    }
+
+    auto n = next(cur);
+
+    if (n == end(conversion_relations[index])) {
+      c[index] = begin(conversion_relations[index]);
+      return make_tuple(true, next_index, c);
+    }
+
+    c[index] = n;
+    return make_tuple(false, next_index, c);
+  }));
+}
+
+combination nth_combination(unsigned int nth)
 {
   auto c = combination_begin;
 
@@ -129,7 +121,7 @@ combination nth_combination(int nth)
 
 int combination_arabic(const combination &c)
 {
-  return std::accumulate(begin(c), end(c), 0, [](int cur, const auto &pair) {
+  return std::accumulate(begin(c), end(c), 0, [](unsigned int cur, const auto &pair) {
     return cur + pair->second;
   });
 }
@@ -152,7 +144,7 @@ int roman_to_arabic(const string &roman)
   return -1;
 }
 
-string arabic_to_roman(int arabic)
+string arabic_to_roman(unsigned int arabic)
 {
   auto comps = extract_components(arabic);
 
@@ -166,15 +158,6 @@ string arabic_to_roman(int arabic)
 }
 
 go_bandit([]{
-  describe("Combinations order", [&]{
-    it("ensures combination order", [&] {
-      for (int i = 0; i < 3999; i++) {
-        auto comb = nth_combination(i);
-        AssertThat(combination_arabic(comb), Equals(i)); 
-      }
-    });
-  });
-
   describe("Obtains the 'components' of a arabic number", []{
     it("obtains 0,0,0,0 from 0", [&] {
       AssertThat(extract_components(0), EqualsContainer(components{0, 0, 0, 0}));
@@ -202,6 +185,10 @@ go_bandit([]{
       AssertThat(roman_to_arabic("I"), Equals(1));
     });
 
+    it("converts XII empty string to 12", [&] {
+      AssertThat(roman_to_arabic("XII"), Equals(12));
+    });
+
     it("converts 0 to empty string", [&] {
       AssertThat(arabic_to_roman(0), Equals(""));
     });
@@ -211,7 +198,7 @@ go_bandit([]{
     });
 
     it("validate all numbers, by converting back and forth", [&] {
-      for (int i = 0; i < 3999; i++) {
+      for (int i = 0; i <= 3999; i++) {
         AssertThat(roman_to_arabic(arabic_to_roman(i)), Equals(i));
       }
     });
